@@ -33,15 +33,15 @@ infixl 5 _+_
   suc (suc a)
   ∎
 
-lemma1 : ∀(a b : ℕ) → a + suc b ≡ suc (a + b)
-lemma1 zero b = refl
-lemma1 (suc a) b = cong suc (lemma1 a b)
+a+sucb=suca+b : ∀(a b : ℕ) → a + suc b ≡ suc (a + b)
+a+sucb=suca+b zero b = refl
+a+sucb=suca+b (suc a) b = cong suc (a+sucb=suca+b a b)
 
 +commutes : ∀(a b : ℕ) -> a + b ≡ b + a
 +commutes a zero = +zero-right a
 +commutes a (suc b) =
   begin
-  a + suc b   ≡⟨ lemma1 a b ⟩
+  a + suc b   ≡⟨ a+sucb=suca+b a b ⟩
   suc (a + b) ≡⟨ cong suc (+commutes a b) ⟩
   suc (b + a)
   ∎
