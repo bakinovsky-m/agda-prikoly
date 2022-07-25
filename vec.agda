@@ -60,3 +60,31 @@ a = suc (suc zero)
 
 b : Fin a
 b = (suc zero)
+
+
+data Bool : Set where
+  True : Bool
+  False : Bool
+
+_<_ : ℕ → ℕ → Bool
+x < zero = False
+zero < x = True
+(suc x) < (suc y) = x < y
+
+data ⊥ : Set where
+
+¬_ : Set → Set
+¬ A = A → ⊥
+_≢_ : {A : Set} → A → A → Set
+x ≢ y = ¬ (x ≡ y)
+
+exFalso : {A : Set} → ⊥ → A
+exFalso ()
+
+head : {n : ℕ} {A : Set} → (v : Vec A n) → {p : (n ≢ zero)} → A
+head {zero} {A} Nil {p} = exFalso (p refl)
+head {suc n} {A} (x :: v) = x
+
+head' : {n : ℕ} {A : Set} → (v : Vec A n) → {p : (zero < n) ≡ True} → A
+head' {zero} {A} Nil {()}
+head' {suc n} {A} (x :: v) {p} = x
