@@ -1,4 +1,3 @@
-{-# OPTIONS -Wall #-}
 open import Agda.Primitive using (lsuc; _⊔_; Level)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong)
 import Relation.Binary.PropositionalEquality as Eq
@@ -15,10 +14,19 @@ data Tree a : Set where
 id : {l : Level} -> {a : Set l} → a -> a
 id x = x
 
+_∘_ : {A B C : Set} → (g : B → C) → (f : A → B) → (a : A) → C
+g ∘ f = λ x → g (f x)
+
 record Functor (F : Set -> Set) : Set1 where
   field
     _<$>_ : {A B : Set} -> (A -> B) -> F A -> F B
     idLaw : {A : Set} → {a : F A} → (id <$> a) ≡ a
+    composeLaw :
+      {A B C : Set} →
+      {a : F A} →
+      {f : A → B} →
+      {g : B → C} →
+      g <$> (f <$> a) ≡ (g ∘ f) <$> a
 
 treeFmap : {a b : Set} → (a -> b) → Tree a → Tree b
 treeFmap f Nil = Nil
@@ -47,8 +55,34 @@ treeIdLaw {A} {Node (Node left x₁ left₁) x right} =
   Node (Node left x₁ left₁) x right
   ∎
 
-treeIsFunctor : {A : Set} → Functor Tree
-treeIsFunctor = record { _<$>_ = treeFmap; idLaw = treeIdLaw}
+treeComposeLaw : {A B C : Set} →
+                 {t : Tree A} →
+                 {f : A → B} →
+                 {g : B → C} →
+                 treeFmap g (treeFmap f t) ≡ treeFmap (g ∘ f) t
+treeComposeLaw {A} {B} {C} {Nil} {f} {g} = refl
+treeComposeLaw {A} {B} {C} {Node t x t₁} {f} {g} =
+  begin
+  Node (treeFmap g (treeFmap f t)) (g (f x)) (treeFmap g (treeFmap f t₁))
+  ≡⟨ refl ⟩
+  Node (treeFmap g (treeFmap f t)) ((g ∘ f) x) (treeFmap g (treeFmap f t₁))
+  ≡⟨ cong (λ left → Node left ((g ∘ f) x) (treeFmap g (treeFmap f t₁)))
+        treeComposeLaw ⟩
+  Node (treeFmap (g ∘ f) t) ((g ∘ f) x) (treeFmap g (treeFmap f t₁))
+  ≡⟨ cong (λ right → Node (treeFmap (g ∘ f) t) ((g ∘ f) x) right) treeComposeLaw ⟩
+  Node (treeFmap (g ∘ f) t) ((g ∘ f) x) (treeFmap (g ∘ f) t₁)
+  ∎
+
+-- !!!!!!!!!!!!!!!!!
+treeIsFunctor : Functor Tree
+treeIsFunctor = record { _<$>_ = treeFmap; idLaw = treeIdLaw; composeLaw = treeComposeLaw}
+-- !!!!!!!!!!!!!!!!!
+
+
+
+
+
+
 
 data List (A : Set) : Set where
   LNil : List A
